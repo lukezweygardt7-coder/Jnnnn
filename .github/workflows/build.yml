@@ -1,0 +1,39 @@
+# Put this file in your repo at: .github/workflows/build.yml
+# Repo root needs: BBSMobSpawner.zip  and  your BBS jar (e.g. BBS_LX_1_0__1_.jar)
+name: Build BBS Mob Spawner
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: 8.6
+
+      - name: Unpack project and add the BBS jar
+        run: |
+          unzip -q -o BBSMobSpawner.zip
+          BBS_JAR=$(ls *.jar | head -n 1)
+          echo "Using BBS jar: $BBS_JAR"
+          mkdir -p BBSMobSpawner/libs
+          cp "$BBS_JAR" BBSMobSpawner/libs/bbs.jar
+
+      - name: Build
+        working-directory: BBSMobSpawner
+        run: gradle build --no-daemon
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bbs-mob-spawner
+          path: BBSMobSpawner/build/libs/bbs-mob-spawner-*[0-9].jar
